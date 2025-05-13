@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Financiero para Negocio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --success: #34a853;
+            --danger: #ea4335;
+            --warning: #fbbc05;
+            --light: #f8f9fa;
+            --dark: #202124;
+            --gray: #5f6368;
+            --border: #dadce0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 0;
+            margin-bottom: 30px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin-bottom: 5px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .card-total {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .balance {
+            color: var(--primary);
+        }
+
+        .income {
+            color: var(--success);
+        }
+
+        .expense {
+            color: var(--danger);
+        }
+
+        .forms-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--light);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-delete {
+            background-color: var(--danger);
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .btn-delete:hover {
+            background-color: #c62828;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: auto;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-bottom: 30px;
+        }
+
+        .export-import {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-container {
+            margin-bottom: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+
+            .dashboard,
+            .forms-container {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .filter-group input,
+            .filter-group select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Control Financiero para Negocio</h1>
+        <p>Gestiona tus ingresos, gastos y visualiza tu flujo de efectivo</p>
+    </header>
+
+    <div class="container">
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Balance</span>
+                </div>
+                <div class="card-total balance" id="balance">$0.00</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Ingresos Totales</span>
+                </div>
+                <div class="card-total income" id="total-income">$0.00</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Gastos Totales</span>
+                </div>
+                <div class="card-total expense" id="total-expense">$0.00</div>
+            </div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="transactions">Transacciones</div>
+                <div class="tab" data-tab="reports">Reportes</div>
+                <div class="tab" data-tab="clients">Clientes</div>
+            </div>
+
+            <div class="tab-content active" id="transactions-tab">
+                <div class="forms-container">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Registrar Ingreso</span>
+                        </div>
+                        <form id="income-form">
+                            <div class="form-group">
+                                <label for="income-date">Fecha</label>
+                                <input type="date" id="income-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="income-amount">Monto</label>
+                                <input type="number" id="income-amount" step="0.01" placeholder="0.00" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="income-client">Cliente</label>
+                                <select id="income-client" required>
+                                    <option value="">Selecciona un cliente</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="income-description">Descripción</label>
+                                <input type="text" id="income-description" placeholder="Descripción del ingreso">
+                            </div>
+                            <button type="submit">Registrar Ingreso</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Registrar Gasto</span>
+                        </div>
+                        <form id="expense-form">
+                            <div class="form-group">
+                                <label for="expense-date">Fecha</label>
+                                <input type="date" id="expense-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="expense-amount">Monto</label>
+                                <input type="number" id="expense-amount" step="0.01" placeholder="0.00" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="expense-category">Categoría</label>
+                                <select id="expense-category" required>
+                                    <option value="">Selecciona una categoría</option>
+                                    <option value="Suministros">Suministros</option>
+                                    <option value="Servicios">Servicios</option>
+                                    <option value="Impuestos">Impuestos</option>
+                                    <option value="Salarios">Salarios</option>
+                                    <option value="Alquiler">Alquiler</option>
+                                    <option value="Transporte">Transporte</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Otros">Otros</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="expense-description">Descripción</label>
+                                <input type="text" id="expense-description" placeholder="Descripción del gasto">
+                            </div>
+                            <button type="submit">Registrar Gasto</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="filter-container">
+                    <div class="filter-group">
+                        <label for="filter-type">Tipo:</label>
+                        <select id="filter-type">
+                            <option value="all">Todos</option>
+                            <option value="income">Ingresos</option>
+                            <option value="expense">Gastos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-start-date">Desde:</label>
+                        <input type="date" id="filter-start-date">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-end-date">Hasta:</label>
+                        <input type="date" id="filter-end-date">
+                    </div>
+                    <div class="filter-group">
+                        <button id="apply-filters">Aplicar Filtros</button>
+                    </div>
+                </div>
+
+                <div class="export-import">
+                    <button id="export-excel">Exportar a Excel</button>
+                    <button id="import-excel">Importar de Excel</button>
+                    <input type="file" id="import-file" accept=".xlsx" style="display: none;">
+                </div>
+
+                <table id="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                            <th>Cliente/Categoría</th>
+                            <th>Monto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-body">
+                        <!-- Las transacciones se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tab-content" id="reports-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Flujo de Caja</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="cash-flow-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Ingresos por Cliente</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="income-by-client-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Gastos por Categoría</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="expense-by-category-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="clients-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Agregar Cliente</span>
+                    </div>
+                    <form id="client-form">
+                        <div class="form-group">
+                            <label for="client-name">Nombre del Cliente</label>
+                            <input type="text" id="client-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="client-contact">Contacto (opcional)</label>
+                            <input type="text" id="client-contact">
+                        </div>
+                        <button type="submit">Agregar Cliente</button>
+                    </form>
+                </div>
+
+                <table id="clients-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Contacto</th>
+                            <th>Total Ingresos</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clients-body">
+                        <!-- Los clientes se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modelo de datos
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let clients = JSON.parse(localStorage.getItem('clients')) || [];
+        let nextTransactionId = Math.max(0, ...transactions.map(t => t.id)) + 1;
+
+        // Configurar fechas predeterminadas
+        document.addEventListener('DOMContentLoaded', function () {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('income-date').value = today;
+            document.getElementById('expense-date').value = today;
+
+            // Cargar datos
+            loadClients();
+            loadTransactions();
+            updateDashboard();
+            updateCharts();
+            setupAutoSync();
+
+            // Configurar pestañas
+            setupTabs();
+        });
+
+        // Funciones de navegación por pestañas
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    tabContents.forEach(content => content.classList.remove('active'));
+
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+
+                    if (tabId === 'reports') {
+                        updateCharts();
+                    }
+                });
+            });
+        }
+
+        // Gestión de clientes
+        document.getElementById('client-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const clientName = document.getElementById('client-name').value.trim();
+            const clientContact = document.getElementById('client-contact').value.trim();
+
+            if (clientName) {
+                // Verificar si ya existe
+                if (clients.some(c => c.name.toLowerCase() === clientName.toLowerCase())) {
+                    alert('Este cliente ya existe');
+                    return;
+                }
+
+                // Agregar nuevo cliente
+                const newClient = {
+                    id: clients.length + 1,
+                    name: clientName,
+                    contact: clientContact
+                };
+
+                clients.push(newClient);
+                saveClients();
+                loadClients();
+
+                // Limpiar formulario
+                document.getElementById('client-name').value = '';
+                document.getElementById('client-contact').value = '';
+            }
+        });
+
+        function loadClients() {
+            const clientSelect = document.getElementById('income-client');
+            clientSelect.innerHTML = '<option value="">Selecciona un cliente</option>';
+
+            clients.forEach(client => {
+                const option = document.createElement('option');
+                option.value = client.id;
+                option.textContent = client.name;
+                clientSelect.appendChild(option);
+            });
+
+            // Actualizar tabla de clientes
+            updateClientTable();
+        }
+
+        function updateClientTable() {
+            const clientsBody = document.getElementById('clients-body');
+            clientsBody.innerHTML = '';
+
+            clients.forEach(client => {
+                // Calcular total de ingresos por cliente
+                const totalIncome = transactions
+                    .filter(t => t.type === 'income' && t.clientId == client.id)
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${client.name}</td>
+                    <td>${client.contact || '-'}</td>
+                    <td>$${totalIncome.toFixed(2)}</td>
+                    <td class="actions">
+                        <button class="btn-delete" onclick="deleteClient(${client.id})">Eliminar</button>
+                    </td>
+                `;
+                clientsBody.appendChild(row);
+            });
+        }
+
+        function deleteClient(clientId) {
+            // Verificar si hay transacciones asociadas
+            const hasTransactions = transactions.some(t => t.type === 'income' && t.clientId == clientId);
+
+            if (hasTransactions) {
+                alert('No se puede eliminar este cliente porque tiene transacciones asociadas');
+                return;
+            }
+
+            if (confirm('¿Está seguro de eliminar este cliente?')) {
+                clients = clients.filter(c => c.id !== clientId);
+                saveClients();
+                loadClients();
+            }
+        }
+
+        function saveClients() {
+            try {
+                localStorage.setItem('clients', JSON.stringify(clients));
+            } catch (e) {
+                console.log('No se pudo guardar en localStorage:', e);
+            }
+        }
+
+        // Gestión de transacciones
+        document.getElementById('income-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const date = document.getElementById('income-date').value;
+            const amount = parseFloat(document.getElementById('income-amount').value);
+            const clientId = document.getElementById('income-client').value;
+            const description = document.getElementById('income-description').value.trim();
+
+            if (!date || isNaN(amount) || !clientId) {
+                alert('Todos los campos obligatorios deben estar completos');
+                return;
+            }
+
+            const client = clients.find(c => c.id == clientId);
+
+            const newTransaction = {
+                id: nextTransactionId++,
+                date: date,
+                type: 'income',
+                amount: amount,
+                description: description,
+                clientId: parseInt(clientId),
+                clientName: client ? client.name : 'Desconocido'
+            };
+
+            transactions.push(newTransaction);
+            saveTransactions();
+            loadTransactions();
+            updateDashboard();
+            updateCharts();
+
+            // Limpiar formulario
+            document.getElementById('income-amount').value = '';
+            document.getElementById('income-description').value = '';
+        });
+
+        document.getElementById('expense-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const date = document.getElementById('expense-date').value;
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            const category = document.getElementById('expense-category').value;
+            const description = document.getElementById('expense-description').value.trim();
+
+            if (!date || isNaN(amount) || !category) {
+                alert('Todos los campos obligatorios deben estar completos');
+                return;
+            }
+
+            const newTransaction = {
+                id: nextTransactionId++,
+                date: date,
+                type: 'expense',
+                amount: amount,
+                description: description,
+                category: category
+            };
+
+            transactions.push(newTransaction);
+            saveTransactions();
+            loadTransactions();
+            updateDashboard();
+            updateCharts();
+
+            // Limpiar formulario
+            document.getElementById('expense-amount').value = '';
+            document.getElementById('expense-description').value = '';
+        });
+
+        function loadTransactions() {
+            // Ordenar transacciones por fecha (más reciente primero)
+            transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const filters = getFilters();
+            let filteredTransactions = filterTransactions(transactions, filters);
+
+            const tbody = document.getElementById('transactions-body');
+            tbody.innerHTML = '';
+
+            filteredTransactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(transaction.date)}</td>
+                    <td>${transaction.type === 'income' ? 'Ingreso' : 'Gasto'}</td>
+                    <td>${transaction.description || '-'}</td>
+                    <td>${transaction.type === 'income' ? transaction.clientName : transaction.category}</td>
+                    <td class="${transaction.type === 'income' ? 'income' : 'expense'}">
+                        ${transaction.type === 'income' ? '+' : '-'}$${transaction.amount.toFixed(2)}
+                    </td>
+                    <td class="actions">
+                        <button class="btn-delete" onclick="deleteTransaction(${transaction.id})">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function deleteTransaction(id) {
+            if (confirm('¿Está seguro de eliminar esta transacción?')) {
+                transactions = transactions.filter(t => t.id !== id);
+                saveTransactions();
+                loadTransactions();
+                updateDashboard();
+                updateCharts();
+                updateClientTable();
+            }
+        }
+
+        function saveTransactions() {
+            try {
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+            } catch (e) {
+                console.log('No se pudo guardar en localStorage:', e);
+            }
+        }
+
+        // Filtros
+        document.getElementById('apply-filters').addEventListener('click', function () {
+            loadTransactions();
+        });
+
+        function getFilters() {
+            return {
+                type: document.getElementById('filter-type').value,
+                startDate: document.getElementById('filter-start-date').value,
+                endDate: document.getElementById('filter-end-date').value
+            };
+        }
+
+        function filterTransactions(transactions, filters) {
+            return transactions.filter(transaction => {
+                // Filtrar por tipo
+                if (filters.type !== 'all' && transaction.type !== filters.type) {
+                    return false;
+                }
+
+                // Filtrar por fecha de inicio
+                if (filters.startDate && transaction.date < filters.startDate) {
+                    return false;
+                }
+
+                // Filtrar por fecha de fin
+                if (filters.endDate && transaction.date > filters.endDate) {
+                    return false;
+                }
+
+                return true;
+            });
+        }
+
+        // Dashboard y reportes
+        function updateDashboard() {
+            const totalIncome = transactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const totalExpense = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const balance = totalIncome - totalExpense;
+
+            document.getElementById('total-income').textContent = `$${totalIncome.toFixed(2)}`;
+            document.getElementById('total-expense').textContent = `$${totalExpense.toFixed(2)}`;
+            document.getElementById('balance').textContent = `$${balance.toFixed(2)}`;
+        }
+
+        // Gráficos
+        let cashFlowChart, incomeByClientChart, expenseByCategChart;
+
+        function updateCharts() {
+            updateCashFlowChart();
+            updateIncomeByClientChart();
+            updateExpenseByCategoryChart();
+        }
+
+        function updateCashFlowChart() {
+            const ctx = document.getElementById('cash-flow-chart').getContext('2d');
+
+            // Organizar datos por mes
+            const monthsData = {};
+
+            transactions.forEach(transaction => {
+                const date = new Date(transaction.date);
+                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+
+                if (!monthsData[monthYear]) {
+                    monthsData[monthYear] = { income: 0, expense: 0 };
+                }
+
+                if (transaction.type === 'income') {
+                    monthsData[monthYear].income += transaction.amount;
+                } else {
+                    monthsData[monthYear].expense += transaction.amount;
+                }
+            });
+
+            // Convertir a arrays para Chart.js
+            const months = Object.keys(monthsData).sort((a, b) => {
+                const [monthA, yearA] = a.split('/').map(Number);
+                const [monthB, yearB] = b.split('/').map(Number);
+
+                if (yearA !== yearB) return yearA - yearB;
+                return monthA - monthB;
+            });
+
+            const incomeData = months.map(month => monthsData[month].income);
+            const expenseData = months.map(month => monthsData[month].expense);
+            const balanceData = months.map(month =>
+                monthsData[month].income - monthsData[month].expense
+            );
+
+            // Destruir gráfico anterior si existe
+            if (cashFlowChart) {
+                cashFlowChart.destroy();
+            }
+
+            // Crear nuevo gráfico
+            cashFlowChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Ingresos',
+                            data: incomeData,
+                            borderColor: '#34a853',
+                            backgroundColor: 'rgba(52, 168, 83, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Gastos',
+                            data: expenseData,
+                            borderColor: '#ea4335',
+                            backgroundColor: 'rgba(234, 67, 53, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Balance',
+                            data: balanceData,
+                            borderColor: '#1a73e8',
+                            backgroundColor: 'rgba(26, 115, 232, 0.1)',
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function updateIncomeByClientChart() {
+            const ctx = document.getElementById('income-by-client-chart').getContext('2d');
+
+            // Calcular ingresos por cliente
+            const clientIncomes = {};
+
+            transactions
+                .filter(t => t.type === 'income')
+                .forEach(transaction => {
+                    const clientName = transaction.clientName || 'Sin cliente';
+
+                    if (!clientIncomes[clientName]) {
+                        clientIncomes[clientName] = 0;
+                    }
+
+                    clientIncomes[clientName] += transaction.amount;
+                });
+
+            const clientNames = Object.keys(clientIncomes);
+            const incomeValues = clientNames.map(name => clientIncomes[name]);
+
+            // Destruir gráfico anterior si existe
+            if (incomeByClientChart) {
+                incomeByClientChart.destroy();
+            }
+
+            // Crear el gráfico de ingresos por cliente
+            incomeByClientChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: clientNames,
+                    datasets: [{
+                        data: incomeValues,
+                        backgroundColor: [
+                            '#4285F4', '#34A853', '#FBBC05', '#EA4335',
+                            '#5E97F6', '#62BB46', '#FDD663', '#E67C73',
+                            '#A8DAB5', '#81C995', '#0F9D58', '#5C6BC0'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function updateExpenseByCategoryChart() {
+            const ctx = document.getElementById('expense-by-category-chart').getContext('2d');
+
+            // Calcular gastos por categoría
+            const categoryExpenses = {};
+
+            transactions
+                .filter(t => t.type === 'expense')
+                .forEach(transaction => {
+                    const category = transaction.category || 'Sin categoría';
+
+                    if (!categoryExpenses[category]) {
+                        categoryExpenses[category] = 0;
+                    }
+
+                    categoryExpenses[category] += transaction.amount;
+                });
+
+            const categories = Object.keys(categoryExpenses);
+            const expenseValues = categories.map(category => categoryExpenses[category]);
+
+            // Destruir gráfico anterior si existe
+            if (expenseByCategChart) {
+                expenseByCategChart.destroy();
+            }
+
+            // Crear el gráfico de gastos por categoría
+            expenseByCategChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: expenseValues,
+                        backgroundColor: [
+                            '#4285F4', '#34A853', '#FBBC05', '#EA4335',
+                            '#5E97F6', '#62BB46', '#FDD663', '#E67C73',
+                            '#A8DAB5', '#81C995', '#0F9D58', '#5C6BC0'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // Utilidades
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        }
+
+        // Exportar e importar datos
+        document.getElementById('export-excel').addEventListener('click', function () {
+            exportToExcel();
+        });
+
+        document.getElementById('import-excel').addEventListener('click', function () {
+            document.getElementById('import-file').click();
+        });
+
+        document.getElementById('import-file').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    importFromExcel(e.target.result);
+                } catch (error) {
+                    alert('Error al importar el archivo: ' + error.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function exportToExcel() {
+            // Crear libro de trabajo
+            const wb = XLSX.utils.book_new();
+
+            // Crear hoja de transacciones
+            const transactionsData = transactions.map(t => {
+                return {
+                    'ID': t.id,
+                    'Fecha': t.date,
+                    'Tipo': t.type === 'income' ? 'Ingreso' : 'Gasto',
+                    'Descripción': t.description || '',
+                    'Monto': t.amount,
+                    'Cliente ID': t.type === 'income' ? t.clientId : '',
+                    'Cliente': t.type === 'income' ? t.clientName : '',
+                    'Categoría': t.type === 'expense' ? t.category : ''
+                };
+            });
+
+            const transactionsWs = XLSX.utils.json_to_sheet(transactionsData);
+            XLSX.utils.book_append_sheet(wb, transactionsWs, 'Transacciones');
+
+            // Crear hoja de clientes
+            const clientsData = clients.map(c => {
+                return {
+                    'ID': c.id,
+                    'Nombre': c.name,
+                    'Contacto': c.contact || ''
+                };
+            });
+
+            const clientsWs = XLSX.utils.json_to_sheet(clientsData);
+            XLSX.utils.book_append_sheet(wb, clientsWs, 'Clientes');
+
+            // Exportar archivo
+            XLSX.writeFile(wb, 'Control_Financiero_' + new Date().toISOString().split('T')[0] + '.xlsx');
+        }
+
+        function importFromExcel(data) {
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            // Importar clientes
+            if (workbook.SheetNames.includes('Clientes')) {
+                const clientsWs = workbook.Sheets['Clientes'];
+                const importedClients = XLSX.utils.sheet_to_json(clientsWs);
+
+                if (importedClients.length > 0) {
+                    if (confirm(`¿Desea importar ${importedClients.length} clientes?`)) {
+                        // Verificar y añadir solo clientes nuevos
+                        importedClients.forEach(importedClient => {
+                            const existingClient = clients.find(c =>
+                                c.id === importedClient.ID ||
+                                c.name.toLowerCase() === importedClient.Nombre.toLowerCase()
+                            );
+
+                            if (!existingClient) {
+                                clients.push({
+                                    id: importedClient.ID || clients.length + 1,
+                                    name: importedClient.Nombre,
+                                    contact: importedClient.Contacto || ''
+                                });
+                            }
+                        });
+
+                        saveClients();
+                        loadClients();
+                    }
+                }
+            }
+
+            // Importar transacciones
+            if (workbook.SheetNames.includes('Transacciones')) {
+                const transactionsWs = workbook.Sheets['Transacciones'];
+                const importedTransactions = XLSX.utils.sheet_to_json(transactionsWs);
+
+                if (importedTransactions.length > 0) {
+                    if (confirm(`¿Desea importar ${importedTransactions.length} transacciones?`)) {
+                        // Convertir datos importados al formato de la aplicación
+                        importedTransactions.forEach(importedTx => {
+                            const isIncome = importedTx.Tipo === 'Ingreso';
+
+                            // Evitar duplicados por ID
+                            if (!transactions.some(t => t.id === importedTx.ID)) {
+                                const newTransaction = {
+                                    id: importedTx.ID || nextTransactionId++,
+                                    date: importedTx.Fecha,
+                                    type: isIncome ? 'income' : 'expense',
+                                    amount: parseFloat(importedTx.Monto),
+                                    description: importedTx.Descripción || ''
+                                };
+
+                                if (isIncome) {
+                                    newTransaction.clientId = importedTx['Cliente ID'] || 0;
+                                    newTransaction.clientName = importedTx.Cliente || 'Desconocido';
+                                } else {
+                                    newTransaction.category = importedTx.Categoría || 'Otros';
+                                }
+
+                                transactions.push(newTransaction);
+                            }
+                        });
+
+                        // Actualizar ID contador
+                        nextTransactionId = Math.max(0, ...transactions.map(t => t.id)) + 1;
+
+                        saveTransactions();
+                        loadTransactions();
+                        updateDashboard();
+                        updateCharts();
+                    }
+                }
+            }
+
+            alert('Importación completada con éxito');
+        }
+
+        // FUNCIONES DE SINCRONIZACIÓN
+
+        // 1. Exportar datos a archivo JSON
+        function exportToJSON() {
+            const dataToExport = {
+                transactions: transactions,
+                clients: clients,
+                lastUpdate: new Date().toISOString()
+            };
+
+            const dataStr = JSON.stringify(dataToExport);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+
+            // Crear link de descarga y simular clic
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(dataBlob);
+            downloadLink.download = 'control_financiero_data.json';
+            downloadLink.click();
+        }
+
+        // 2. Importar datos desde archivo JSON
+        function importFromJSON(jsonData) {
+            try {
+                const importedData = JSON.parse(jsonData);
+
+                // Verificar si los datos tienen el formato esperado
+                if (!importedData.transactions || !importedData.clients) {
+                    throw new Error('El archivo no contiene los datos esperados');
+                }
+
+                // Confirmar la importación
+                if (confirm(`¿Importar datos con fecha: ${new Date(importedData.lastUpdate).toLocaleString()}?\n\nEsto reemplazará todos tus datos actuales.`)) {
+                    // Importar datos
+                    transactions = importedData.transactions;
+                    clients = importedData.clients;
+                    nextTransactionId = Math.max(0, ...transactions.map(t => t.id)) + 1;
+
+                    // Guardar localmente
+                    saveTransactions();
+                    saveClients();
+
+                    // Actualizar interfaz
+                    loadTransactions();
+                    loadClients();
+                    updateDashboard();
+                    updateCharts();
+
+                    return true;
+                }
+            } catch (error) {
+                alert('Error al importar los datos: ' + error.message);
+            }
+            return false;
+        }
+
+        // 3. Programar sincronización automática
+        function setupAutoSync(intervalMinutes = 5) {
+            // Agregar botones de sincronización manual a la UI
+            const syncContainer = document.createElement('div');
+            syncContainer.className = 'export-import';
+            syncContainer.innerHTML = `
+        <button id="export-sync" title="Guardar datos para sincronizar">📤 Guardar para Sincronizar</button>
+        <button id="import-sync" title="Cargar datos sincronizados">📥 Cargar Sincronización</button>
+        <input type="file" id="sync-file" accept=".json" style="display: none;">
+    `;
+
+            // Insertar después de los botones de exportar/importar Excel
+            document.querySelector('.export-import').after(syncContainer);
+
+            // Agregar eventos a los botones
+            document.getElementById('export-sync').addEventListener('click', exportToJSON);
+            document.getElementById('import-sync').addEventListener('click', function () {
+                document.getElementById('sync-file').click();
+            });
+
+            document.getElementById('sync-file').addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    importFromJSON(e.target.result);
+                };
+                reader.readAsText(file);
+            });
+
+            // Agregar indicador de última sincronización
+            const syncStatus = document.createElement('div');
+            syncStatus.id = 'sync-status';
+            syncStatus.style.fontSize = '12px';
+            syncStatus.style.color = '#666';
+            syncStatus.style.marginTop = '5px';
+            syncStatus.textContent = 'Última sincronización: Nunca';
+            syncContainer.appendChild(syncStatus);
+        }
+
+        function initializeData() {
+            try {
+                // Intentar cargar datos del localStorage primero
+                const storedTransactions = localStorage.getItem('transactions');
+                const storedClients = localStorage.getItem('clients');
+
+                if (storedTransactions && storedClients) {
+                    transactions = JSON.parse(storedTransactions);
+                    clients = JSON.parse(storedClients);
+                    nextTransactionId = Math.max(0, ...transactions.map(t => t.id)) + 1;
+                    console.log('Datos cargados del almacenamiento local');
+                    return;
+                }
+            } catch (e) {
+                console.log('Error al cargar datos guardados:', e);
+            }
+
+            // Si no hay datos guardados, crear datos de ejemplo
+            console.log('Creando datos de ejemplo...');
+
+            // Clientes de ejemplo
+            clients = [
+                { id: 1, name: "Cliente 1", contact: "cliente1@example.com" },
+                { id: 2, name: "Cliente 2", contact: "cliente2@example.com" },
+                { id: 3, name: "Cliente 3", contact: "555-123-4567" }
+            ];
+
+            // Transacciones de ejemplo
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const lastWeek = new Date(today);
+            lastWeek.setDate(lastWeek.getDate() - 7);
+
+            transactions = [
+                {
+                    id: 1,
+                    date: today.toISOString().split('T')[0],
+                    type: 'income',
+                    amount: 1500,
+                    description: 'Pago por servicios',
+                    clientId: 1,
+                    clientName: 'Cliente 1'
+                },
+                {
+                    id: 2,
+                    date: yesterday.toISOString().split('T')[0],
+                    type: 'expense',
+                    amount: 300,
+                    description: 'Compra de materiales',
+                    category: 'Suministros'
+                },
+                {
+                    id: 3,
+                    date: lastWeek.toISOString().split('T')[0],
+                    type: 'income',
+                    amount: 2000,
+                    description: 'Proyecto completado',
+                    clientId: 2,
+                    clientName: 'Cliente 2'
+                }
+            ];
+
+            nextTransactionId = 4;
+
+            // Guardar estos datos de ejemplo
+            saveTransactions();
+            saveClients();
+        }
+    </script>
+</body>
+
+</html>
